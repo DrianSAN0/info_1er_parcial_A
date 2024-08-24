@@ -23,6 +23,9 @@ class App(arcade.Window):
     def __init__(self):
         super().__init__(WIDTH, HEIGHT, TITLE)
         self.background = arcade.load_texture("assets/img/background3.png")
+        #Crear score para actualizar puntaje
+        self.score = 0
+
         # crear espacio de pymunk
         self.space = pymunk.Space()
         self.space.gravity = (0, GRAVITY)
@@ -58,6 +61,7 @@ class App(arcade.Window):
                 if obj.shape in arbiter.shapes:
                     obj.remove_from_sprite_lists()
                     self.space.remove(obj.shape, obj.body)
+                    self.score += 15
 
         return True
 
@@ -108,6 +112,14 @@ class App(arcade.Window):
         if self.draw_line:
             arcade.draw_line(self.start_point.x, self.start_point.y, self.end_point.x, self.end_point.y,
                              arcade.color.BLACK, 3)
+            
+        start_x = 1350
+        start_y = HEIGHT - 30
+        arcade.draw_text(f"Score: {self.score}",
+                         start_x,
+                         start_y,
+                         arcade.color.FRENCH_WINE,
+                         18, bold=True)
 
 
 def main():
