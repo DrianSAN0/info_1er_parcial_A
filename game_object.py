@@ -1,7 +1,11 @@
 import math
 import arcade
 import pymunk
+import logging
 from game_logic import ImpulseVector
+
+
+logger = logging.getLogger("game_object")
 
 
 class Bird(arcade.Sprite):
@@ -59,35 +63,23 @@ class YellowBird(Bird):
                  impulse_vector: ImpulseVector, 
                  x: float, y: float, 
                  space: pymunk.Space, 
-                 mass: float = 5, 
-                 radius: float = 12, 
-                 max_impulse: float = 100, 
-                 power_multiplier: float = 50, 
-                 elasticity: float = 0.8, 
-                 friction: float = 1, 
-                 collision_layer: int = 0, 
-                 impulse_multiplier: float = 2
+                 impulse_multiplier: float = 3
                  ):
         super().__init__(image_path, 
                          impulse_vector, 
                          x, 
                          y, 
-                         space, 
-                         mass, 
-                         radius, 
-                         max_impulse, 
-                         power_multiplier, 
-                         elasticity, 
-                         friction, 
-                         collision_layer)
+                         space)
         self.impulse_multiplier = impulse_multiplier
         self.has_boosted = False  # Para evitar que el impulso aumente varias veces
 
     def on_click(self):
         if not self.has_boosted:
             impulse = self.impulse_multiplier * self.body.velocity.length
+            logger.debug(f"Chuck esta siendo impulsado con: {impulse} de impulso")
             impulse_vector = pymunk.Vec2d(impulse, 0).rotated(self.body.angle)
             self.body.apply_impulse_at_local_point(impulse_vector)
+            logger.debug(f"Chuck ha sido impulsado")
             self.has_boosted = True  # Asegura que el impulso solo aumente una vez
 
 class BlueBird(Bird):
@@ -98,39 +90,27 @@ class BlueBird(Bird):
                  space: pymunk.Space, 
                  sprites_list: arcade.SpriteList,
                  birds_list: arcade.SpriteList,
-                 mass: float = 5, 
-                 radius: float = 12, 
-                 max_impulse: float = 100, 
-                 power_multiplier: float = 50, 
-                 elasticity: float = 0.8, 
-                 friction: float = 1, 
-                 collision_layer: int = 0, 
                  angle_offset: float = 30
                  ):
         super().__init__(image_path, 
                          impulse_vector, 
                          x, 
                          y, 
-                         space, 
-                         mass, 
-                         radius, 
-                         max_impulse, 
-                         power_multiplier, 
-                         elasticity, 
-                         friction, 
-                         collision_layer)
+                         space)
         self.angle_offset = angle_offset
         self.has_split = False
         self.sprites_list = sprites_list  
-        self.birds_list = birds_list      
+        self.birds_list = birds_list
 
     def on_click(self):
         if not self.has_split:
+            logger.debug(f"Blue esta siendo dividido")
             # Calcular las nuevas direcciones
             angles = [self.body.angle + math.radians(self.angle_offset),
                       self.body.angle,
                       self.body.angle - math.radians(self.angle_offset)]
-
+            logger.debug(f"Se calcularon las nuevas direcciones para dividir a Blue: {angles}")
+            i = 1
             for angle in angles:
                 # Mantener la velocidad actual del pájaro
                 velocity = self.body.velocity.rotated(angle - self.body.angle)
@@ -157,6 +137,9 @@ class BlueBird(Bird):
                 # Añadir el nuevo pájaro a la lista
                 self.sprites_list.append(new_bird)
                 self.birds_list.append(new_bird)
+                logger.debug(f"Se crearo un nuevo Blue con el angulo {i} calculado")
+                i+=1
+
 
             # Remover el BlueBird original
             self.remove_from_sprite_lists()
