@@ -4,8 +4,10 @@ import arcade
 import arcade.key
 import pymunk
 
-from game_object import Bird, YellowBird, BlueBird, Column, Pig
+from game_object import Bird, YellowBird, BlueBird, Column, Pig, Box, Beam, Triangle_Beam
 from game_logic import get_impulse_vector, Point2D, get_distance
+
+import levels
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("arcade").setLevel(logging.WARNING)
@@ -14,8 +16,8 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 logger = logging.getLogger("main")
 
-WIDTH = 1800
-HEIGHT = 800
+WIDTH = 1600
+HEIGHT = 600
 TITLE = "Angry birds"
 GRAVITY = -900
 
@@ -26,6 +28,8 @@ class App(arcade.Window):
         self.background = arcade.load_texture("assets/img/background3.png")
         #Crear score para actualizar puntaje
         self.score = 0
+        self.level = 1
+        self.win = False
 
         # crear espacio de pymunk
         self.space = pymunk.Space()
@@ -40,8 +44,8 @@ class App(arcade.Window):
         self.sprites = arcade.SpriteList()
         self.birds = arcade.SpriteList()
         self.world = arcade.SpriteList()
-        self.add_columns()
-        self.add_pigs()
+        self.run_level(levels.level_1)
+    
 
         self.start_point = Point2D()
         self.end_point = Point2D()
@@ -67,28 +71,49 @@ class App(arcade.Window):
 
         return True
 
-    def add_columns(self):
-        for x in range(WIDTH // 2, WIDTH, 300):
-            logger.debug(f"Posion de la columna: {x}")
-            column = Column(x, 50, self.space)
-            self.sprites.append(column)
-            self.world.append(column)
-
-    def add_pigs(self):
-        pig1 = Pig(WIDTH / 2, 100, self.space)
-        self.sprites.append(pig1)
-        self.world.append(pig1)
 
     def on_update(self, delta_time: float):
         self.space.step(1 / 60.0)  # actualiza la simulacion de las fisicas
         self.update_collisions()
         self.sprites.update()
+        if self.score > 200 and self.level == 1:
+            self.score = 0
+            self.level = 2
+            for bird in self.birds:
+                bird.remove_from_sprite_lists()
+                self.space.remove(bird.shape, bird.body)
+            for obj in self.world:
+                obj.remove_from_sprite_lists()
+                self.space.remove(obj.shape, obj.body)
+            for sprite in self.sprites:
+                sprite.remove_from_sprite_lists()
+                self.space.remove(sprite.shape, sprite.body)
+            self.run_level(levels.level_2)
+        elif self.score > 400 and self.level == 2:
+            self.score = 0
+            self.level = 3
+            for bird in self.birds:
+                bird.remove_from_sprite_lists()
+                self.space.remove(bird.shape, bird.body)
+            for obj in self.world:
+                obj.remove_from_sprite_lists()
+                self.space.remove(obj.shape, obj.body)
+            for sprite in self.sprites:
+                sprite.remove_from_sprite_lists()
+                self.space.remove(sprite.shape, sprite.body)
+            self.run_level(levels.level_3)
+        elif self.score > 600 and self.level == 3:
+            self.win=True
+            
+        
 
     def update_collisions(self):
         pass
 
-    def create_level(self):
-        pass
+    def run_level(self, level):
+        for func, params in level:
+            func(self.space,self.sprites, self.world,**params)
+
     
     def change_level(self):
         pass
@@ -140,7 +165,8 @@ class App(arcade.Window):
     def on_draw(self):
         arcade.start_render()
         arcade.draw_lrwh_rectangle_textured(0, 0, WIDTH, HEIGHT, self.background)
-        arcade.draw_lrwh_rectangle_textured(30, 700, 80, 80, arcade.load_texture(f"assets/img/{self.bird_type}-bird.png"))
+        arcade.draw_lrwh_rectangle_textured(30, 500, 80, 80, arcade.load_texture(f"assets/img/{self.bird_type}-bird.png"))
+        
         self.sprites.draw()
         if self.draw_line:
             arcade.draw_line(self.start_point.x, self.start_point.y, self.end_point.x, self.end_point.y,
@@ -151,6 +177,18 @@ class App(arcade.Window):
         arcade.draw_text(f"Score: {self.score}",
                          start_x,
                          start_y,
+                         arcade.color.FRENCH_WINE,
+                         18, bold=True)
+        
+        arcade.draw_text(f"Level: {self.level}",
+                         WIDTH // 2 - 50,
+                         start_y,
+                         arcade.color.FRENCH_WINE,
+                         18, bold=True)
+        if self.win == True:
+            arcade.draw_text(f"GANASTE",
+                         WIDTH // 2 - 70,
+                         start_y - 50,
                          arcade.color.FRENCH_WINE,
                          18, bold=True)
 

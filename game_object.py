@@ -213,6 +213,54 @@ class Column(PassiveObject):
         super().__init__("assets/img/column.png", x, y, space)
 
 
+class Box(PassiveObject):
+    def __init__(self, x, y, space):
+        super().__init__("assets/img/box.png", x, y, space)
+
+class Beam(PassiveObject):
+    def __init__(self, x, y, space):
+        super().__init__("assets/img/beam1.png", x, y, space)
+
+
+
+class Triangle_Beam(arcade.Sprite):
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        space: pymunk.Space,
+        mass: float = 2,
+        elasticity: float = 0.8,
+        friction: float = 1,
+        collision_layer: int = 0,
+    ):
+        self.image_path = "assets/img/triangle_beam.png"
+        super().__init__(self.image_path, 1)
+        width = self.width
+        height = self.height
+        vertices = [
+            (-width / 2, -height / 2),  # Esquina inferior izquierda
+            (width / 2, -height / 2),   # Esquina inferior derecha
+            (0, height / 2)             # Punta superior (centro arriba)
+        ]
+        moment = pymunk.moment_for_poly(mass, vertices)
+        body = pymunk.Body(mass, moment)
+        body.position = (x, y)
+        shape = pymunk.Poly(body, vertices)
+        shape.elasticity = elasticity
+        shape.friction = friction
+        shape.collision_type = collision_layer
+        space.add(body, shape)
+        self.body = body
+        self.shape = shape
+
+    def update(self):
+        self.center_x = self.shape.body.position.x
+        self.center_y = self.shape.body.position.y
+        self.radians = self.shape.body.angle
+
+
+
 class StaticObject(arcade.Sprite):
     def __init__(
             self,
